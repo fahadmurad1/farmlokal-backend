@@ -203,7 +203,7 @@ Example response:
 
 🧪 Local Testing Checklist
 1️⃣ Verify Token Retrieval
-curl http://localhost:4000/auth/test-token
+curl http://localhost:4000/auth/test-token  Render: https://farmlokal-backend-a7qh.onrender.com/auth/test-token
 
 2️⃣ Verify Redis Cache
 redis-cli
@@ -211,27 +211,10 @@ GET oauth2:access_token
 TTL oauth2:access_token
 
 3️⃣ Verify External API Call
-curl http://localhost:4000/api/external-data
+curl http://localhost:4000/api/external-data and rendeer https://farmlokal-backend-a7qh.onrender.com/api/external-data
 
-☁️ Deployment (Render)
 
-Push code to GitHub
-
-Create New Web Service on Render
-
-Set:
-
-Build Command: npm install
-
-Start Command: npm start
-
-Add environment variables in Render dashboard
-
-Deploy 🎉
-
-Test:
-
-curl https://your-app.onrender.com/health
+curl https://farmlokal-backend-a7qh.onrender.com/health
 
 📁 Project Structure
 .
