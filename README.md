@@ -211,10 +211,12 @@ GET oauth2:access_token
 TTL oauth2:access_token
 
 3️⃣ Verify External API Call
-curl http://localhost:4000/api/external-data and rendeer https://farmlokal-backend-a7qh.onrender.com/api/external-data
+curl http://localhost:4000/api/external-data 
 
 
 curl https://farmlokal-backend-a7qh.onrender.com/health
+
+deploy on render : https://farmlokal-backend-a7qh.onrender.com/
 
 📁 Project Structure
 .
