@@ -1,249 +1,299 @@
-🚜 FarmLokal Backend – OAuth2 Client Credentials API
+🚜 FarmLokal Backend – OAuth2 + Redis + MySQL Products API
 
-A production-ready Node.js backend demonstrating secure OAuth2 authentication, Redis-based token caching, and efficient external API communication — inspired by real-world backend challenges at FarmLokal.
+A production-ready Node.js backend that demonstrates secure OAuth2 Client Credentials with Auth0, Redis-based token caching, and real product APIs powered by a MySQL database deployed on Railway.
 
-This service implements the OAuth2 Client Credentials flow using Auth0, safely caches access tokens in Redis, and ensures high performance, reliability, and concurrency safety when interacting with protected external APIs.
-
-✨ Key Highlights
-
-🔐 OAuth2 Client Credentials Authentication
-
-⚡ Redis-based token caching with TTL
-
-♻️ Automatic token refresh before expiry
-
-🧵 Concurrency-safe token fetching (no duplicate OAuth calls)
-
-🩺 Health & debug endpoints
-
-🚀 Deployment-ready (Render compatible)
+✨ Overview
+This service implements the OAuth2 Client Credentials flow using Auth0, safely caches access tokens in Redis, and exposes REST endpoints for farm products stored in MySQL. It is fully deployable on Render (backend) with Redis (Render Key Value) and MySQL (Railway), closely mirroring real-world backend architecture.
 
 🛠 Tech Stack
-
 Node.js + Express
 
 Auth0 (OAuth2 Authorization Server)
 
-Redis (Token cache & locking)
+Redis via ioredis (token cache)
 
-Axios / node-fetch (HTTP client)
+MySQL via mysql2/promise (Railway-hosted)
 
-🧠 Architecture Overview
+Axios / node-fetch for external HTTP calls
 
-The backend exposes REST APIs consumed by clients (frontend or other services).
+🧠 Architecture
+Clients call this backend for:
 
-When a protected external API needs to be called:
+Product data (MySQL).
 
-The service retrieves an OAuth2 access token using the Client Credentials grant.
+External protected API data (via OAuth2 token).
 
-The token is:
+For protected external calls:
 
-Cached in Redis
+Backend uses OAuth2 Client Credentials grant with Auth0.
 
-Stored with a TTL slightly less than expires_in
+Access token is cached in Redis with TTL slightly less than expires_in.
 
-All subsequent requests reuse the cached token.
+Redis lock ensures only one instance refreshes the token when expired.
 
-When the token is near expiry:
+Products data:
 
-A Redis lock ensures only one request fetches a new token
+Stored in a products table in a MySQL database on Railway.
 
-Other concurrent requests reuse the refreshed token
-
-📌 This pattern is provider-agnostic and works with any OAuth2-compliant authorization server.
+Accessed using a connection pool (mysql2/promise) for efficiency.
 
 🚀 Getting Started
 ✅ Prerequisites
-
 Node.js (LTS)
 
-Redis (local or cloud)
+Redis (local or Render Key Value)
+
+MySQL:
+
+Local (for dev)
+
+Railway MySQL instance (for production)
 
 Auth0 account with:
 
-Machine-to-Machine (M2M) Application
+Machine-to-Machine application
 
-API configured as the audience
+API configured as audience
+​
 
 📦 Clone & Install
-git clone <your-repo-url>
-cd <your-project-folder>
+bash
+git clone https://github.com/fahadmurad1/farmlokal-backend.git
+cd farmlokal-backend
 npm install
-
 🔐 Environment Variables
+Create .env in the project root for local development:
 
-Create a .env file in the project root:
-
+text
 PORT=4000
 NODE_ENV=development
 
-AUTH0_DOMAIN=dev-xxxxx.us.auth0.com
-AUTH0_CLIENT_ID=your-client-id
-AUTH0_CLIENT_SECRET=your-client-secret
-AUTH0_AUDIENCE=https://farmlokal-api
+# MySQL (local)
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=your-local-password
+MYSQL_DATABASE=farmlokal
 
+# Redis (local)
 REDIS_URL=redis://localhost:6379
 TOKEN_CACHE_KEY=oauth2:access_token
 TOKEN_TTL_OFFSET=30
 
+# OAuth/Auth0
+OAUTH_TOKEN_URL=https://dev-og2up7sau024sfke.us.auth0.com/oauth/token
+OAUTH_CLIENT_ID=your-client-id
+OAUTH_CLIENT_SECRET=your-client-secret
+OAUTH_AUDIENCE=https://farmlokal-api
+Render (backend) – set these in the Render dashboard (no .env committed):
 
-📌
+text
+# Server
+PORT=4000
 
-TOKEN_TTL_OFFSET ensures token refresh before actual expiry
+# Redis (Render Key Value internal URL)
+REDIS_URL=redis://red-...:6379
 
-Never commit secrets — use environment variables only
+# MySQL (Railway Public URL: mysql://root:PASSWORD@HOST:PORT/railway)
+MYSQL_HOST=switchyard.proxy.rlwy.net
+MYSQL_USER=root
+MYSQL_PASSWORD=<Railway root password>
+MYSQL_DATABASE=railway
+
+# OAuth/Auth0
+OAUTH_TOKEN_URL=https://dev-og2up7sau024sfke.us.auth0.com/oauth/token
+OAUTH_CLIENT_ID=<your client id>
+OAUTH_CLIENT_SECRET=<your client secret>
+OAUTH_AUDIENCE=https://farmlokal-api
+📌 Security:
+
+Never commit .env or secrets to Git.
+
+Use Render/Railway environment variable panels for all secrets.
 
 ▶️ Running the Server
-Development
+Development:
+
+bash
 npm run dev
+Production:
 
-Production
+bash
 npm start
-
-
-Server runs at:
-
-http://localhost:4000
+Local: http://localhost:4000
+Render: https://farmlokal-backend-a7qh.onrender.com/ (example URL).
+​
 
 🔑 OAuth2 Client Credentials Flow
-Token Request
+Token Request:
+
+text
 POST https://<AUTH0_DOMAIN>/oauth/token
 Content-Type: application/json
 
 {
-  "client_id": "<AUTH0_CLIENT_ID>",
-  "client_secret": "<AUTH0_CLIENT_SECRET>",
-  "audience": "<AUTH0_AUDIENCE>",
+  "client_id": "<OAUTH_CLIENT_ID>",
+  "client_secret": "<OAUTH_CLIENT_SECRET>",
+  "audience": "<OAUTH_AUDIENCE>",
   "grant_type": "client_credentials"
 }
+Token Response:
 
-Token Response
+json
 {
   "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
   "expires_in": 86400,
   "token_type": "Bearer"
 }
+Token Lifecycle:
 
-Token Handling Logic
+Store access_token in Redis under TOKEN_CACHE_KEY.
 
-Access token stored in Redis
+Set TTL to expires_in - TOKEN_TTL_OFFSET.
 
-TTL = expires_in - TOKEN_TTL_OFFSET
-
-Token reused until near expiry
-
-Redis lock prevents duplicate fetches under concurrency
-
-⚡ Redis Token Caching Strategy
-
-Check Redis for cached token
-
-If token exists → return immediately
-
-If missing/expired:
-
-Acquire Redis lock
-
-Fetch fresh token from Auth0
-
-Update Redis + TTL
-
-Concurrent requests reuse the cached token
-
-✅ Result:
-
-Reduced Auth0 load
-
-Faster response times
-
-Safe concurrency handling
+Reuse token until near expiry; then acquire a Redis lock, fetch a new token, and update Redis so all workers share the same token.
 
 🌐 API Endpoints
-🩺 Health Check
+1. Health Check
+text
 GET /health
-
-
 Response:
 
-{ "status": "ok" }
+json
+{
+  "status": "ok"
+}
+Used by Render health checks and simple uptime monitoring.
 
-
-Used for uptime checks & Render health monitoring.
-
-🔍 Test Token (Debug Only)
+2. OAuth Token Debug (Dev Only)
+text
 GET /auth/test-token
+Returns the access token currently in use (from Redis or freshly fetched).
 
-
-Returns the currently cached access token.
-
+json
 {
   "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
+⚠️ Restrict or remove this in real production.
 
+3. Products API (MySQL – Railway)
+These endpoints serve farm products from the products table in MySQL:
 
-⚠️ Disable or restrict this endpoint in production.
+a) Get all products
+text
+GET /products
+Executes:
 
-🔗 Example Protected Proxy
-GET /api/external-data
-
-
-Attaches token as:
-
-Authorization: Bearer <token>
-
-
-Proxies request to protected external API
-
+sql
+SELECT * FROM products;
 Example response:
 
+json
+[
+  {
+    "id": 1,
+    "name": "Farm Fresh Tomato",
+    "price": 20,
+    "category": "vegetable"
+  },
+  {
+    "id": 2,
+    "name": "Organic Potato",
+    "price": 15,
+    "category": "vegetable"
+  }
+]
+b) Get product by ID
+text
+GET /products/:id
+Executes:
+
+sql
+SELECT * FROM products WHERE id = ?;
+Example response:
+
+json
+{
+  "id": 1,
+  "name": "Farm Fresh Tomato",
+  "price": 20,
+  "category": "vegetable"
+}
+These endpoints show how the backend integrates a real MySQL database while still leveraging OAuth2 and Redis for external calls.
+
+4. Example Protected Proxy Endpoint
+text
+GET /api/external-data
+Adds the cached access token:
+
+text
+Authorization: Bearer <access_token>
+Forwards the request to a protected external API and returns normalized data:
+
+json
 {
   "source": "external-api",
   "data": []
 }
+🧪 Testing
+Local
+bash
+# Token
+curl http://localhost:4000/auth/test-token
 
-🧪 Local Testing Checklist
-1️⃣ Verify Token Retrieval
-curl http://localhost:4000/auth/test-token  Render: https://farmlokal-backend-a7qh.onrender.com/auth/test-token
+# Health
+curl http://localhost:4000/health
 
-2️⃣ Verify Redis Cache
+# Products (MySQL local)
+curl http://localhost:4000/products
+Redis check:
+
+bash
 redis-cli
 GET oauth2:access_token
 TTL oauth2:access_token
+You should see a token string and a positive TTL value.
 
-3️⃣ Verify External API Call
-curl http://localhost:4000/api/external-data 
-
-
+Deployed (Render + Railway)
+bash
+# Health
 curl https://farmlokal-backend-a7qh.onrender.com/health
 
-deploy on render : https://farmlokal-backend-a7qh.onrender.com/
+# Token
+curl https://farmlokal-backend-a7qh.onrender.com/auth/test-token
+
+# Products (Railway MySQL)
+curl https://farmlokal-backend-a7qh.onrender.com/products
+
 
 📁 Project Structure
+text
 .
 ├── src
-│   ├── index.js              # Express app entry
-│   ├── routes                # API routes
+│   ├── app.js              # Express app entry
+│   ├── routes
+│   │   ├── products.js     # Products API (MySQL)
+│   │   └── auth.js         # Auth/token endpoints
 │   ├── services
-│   │   └── authService.js    # OAuth2 + Redis token logic
+│   │   └── authService.js  # OAuth2 + Redis token logic
 │   ├── config
-│   │   └── redisClient.js    # Redis client setup
-│   └── middleware
+│   │   ├── env.js          # Environment variables
+│   │   ├── db.js           # MySQL pool (mysql2/promise)
+│   │   └── redis.js        # Redis client (ioredis)
+│   └── integrations
+│       └── webhook.js      # Example external webhook handler (optional)
+├── scripts
+│   └── seedProducts.js     # Seed script for local DB
 ├── .env.example
 ├── package.json
 └── README.md
+(Adjust file names to match your repo.)
 
-🧠 Best Practices & Notes
+🧠 Best Practices
+🔒 Keep secrets out of Git; use .env locally and environment variables in Render/Railway.
 
-🔒 Never commit secrets to Git
+🔍 For large Redis datasets, inspect keys using SCAN instead of KEYS.
+​
 
-🧪 /auth/test-token is for debugging only
+🧪 Add simple DB tests (e.g. SELECT 1 on startup) to fail fast if MySQL credentials are wrong.
 
-🔍 Use SCAN instead of KEYS in Redis at scale
-
-🧩 Pattern easily extendable to:
-
-Webhooks
-
-Rate limiting
-
-Circuit breakers
+♻️ The OAuth2 + Redis pattern can be reused for webhooks, rate limiting, and other infrastructure concerns.
