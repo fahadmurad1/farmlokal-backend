@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FarmLokal Products</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050816;
+      --card-bg: #0f172a;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px 32px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      width: fit-content;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+    }
+
+    h1 {
+      font-size: 26px;
+      letter-spacing: 0.03em;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 700px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 768px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    /* Filter / Controls Panel */
+
+    .panel {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.97), rgba(15, 23, 42, 0.9));
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 14px 14px 16px;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.75);
+      position: sticky;
+      top: 16px;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .panel-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.5);
+      background: #020617;
+    }
+
+    .input::placeholder {
+      color: #6b7280;
+    }
+
+    .price-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .helper-text {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .chip {
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      background: rgba(15, 23, 42, 0.9);
+      transition: all 0.15s ease;
+    }
+
+    .chip.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(34, 197, 94, 0.18);
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-primary {
+      width: 100%;
+      margin-top: 6px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #020617;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 12px 30px rgba(22, 163, 74, 0.55);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 40px rgba(22, 163, 74, 0.7);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 10px 25px rgba(22, 163, 74, 0.5);
+    }
+
+    /* Right side: list & header */
+
+    .content-card {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 12px 14px 14px;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.8);
+    }
+
+    .content-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .count-text {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .sort-select {
+      min-width: 160px;
+    }
+
+    .list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .product-card {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.08), rgba(15, 23, 42, 0.98));
+      padding: 10px 10px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .product-category {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    .product-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .product-desc {
+      font-size: 11px;
+      color: var(--muted);
+      max-height: 40px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .product-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .price-tag {
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .created-at {
+      color: var(--muted);
+    }
+
+    .card-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 55%);
+      opacity: 0;
+      transition: opacity 0.12s ease;
+    }
+
+    .product-card:hover .card-glow {
+      opacity: 1;
+    }
+
+    .product-card:hover {
+      transform: translateY(-1px);
+      transition: transform 0.12s ease;
+    }
+
+    .pagination-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 11px;
+      background: rgba(15, 23, 42, 0.96);
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.12s ease;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-secondary[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: var(--border);
+    }
+
+    .status-text {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .loading {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    .skeleton-card {
+      height: 90px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: linear-gradient(90deg, #020617, #020617, #111827);
+      background-size: 200% 100%;
+      animation: shimmer 1.3s infinite;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: -200% 0;
+      }
+      100% {
+        background-position: 200% 0;
+      }
+    }
+
+    .error-msg {
+      font-size: 12px;
+      color: #fca5a5;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      margin-bottom: 10px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="badge">
+        <span class="pulse-dot"></span>
+        Live Product Feed · FarmLokal
+      </div>
+      <h1>Browse fresh products from local farmers</h1>
+      <p class="subtitle">
+        Hyperlocal marketplace backend demo – filter by category, price range, and search text,
+        while the API stays optimized with pagination, Redis caching, and MySQL indexing.
+      </p>
+    </header>
+
+    
+
+<section style="margin-bottom: 16px; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(148,163,184,0.3); background: rgba(15,23,42,0.96);">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:13px; font-weight:600;">OAuth2 Client Credentials Demo</div>
+      <div style="font-size:11px; color:#9ca3af;">
+        Click the button to ask backend to fetch & cache an access token using client_credentials flow.
+      </div>
+    </div>
+    <button id="oauthBtn" style="padding:6px 10px; border-radius:999px; border:none; font-size:11px; font-weight:600; cursor:pointer; background:linear-gradient(135deg,#22c55e,#16a34a); color:#020617;">
+      Get Access Token
+    </button>
+  </div>
+  <pre id="oauthTokenBox" style="margin-top:8px; font-size:11px; color:#e5e7eb; background:#020617; padding:8px; border-radius:8px; max-height:120px; overflow:auto; white-space:pre-wrap;"></pre>
+</section>
+
+
+    <div class="layout">
+      <!-- Filters / controls -->
+      <aside class="panel">
+        <div class="panel-title">Filters & Controls</div>
+        <div class="panel-sub">Adjust filters and hit “Apply Filters” to refetch from the backend.</div>
+
+        <div class="field-group">
+          <label class="field-label">Search (name or description)</label>
+          <input id="searchInput" class="input" placeholder="e.g. milk, paneer, apple" />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Category</label>
+          <div class="chip-row" id="categoryChips">
+            <button class="chip active" data-value="">All</button>
+            <button class="chip" data-value="milk">Milk</button>
+            <button class="chip" data-value="vegetable">Vegetables</button>
+            <button class="chip" data-value="fruit">Fruits</button>
+            <button class="chip" data-value="grocery">Groceries</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Price range (₹)</label>
+          <div class="price-row">
+            <input id="minPriceInput" class="input" type="number" placeholder="Min" />
+            <input id="maxPriceInput" class="input" type="number" placeholder="Max" />
+          </div>
+          <div class="helper-text">Leave empty for no min/max.</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Sort by</label>
+          <select id="sortSelect" class="select">
+            <option value="createdAt:desc">Newest first</option>
+            <option value="createdAt:asc">Oldest first</option>
+            <option value="price:asc">Price: Low → High</option>
+            <option value="price:desc">Price: High → Low</option>
+            <option value="name:asc">Name: A → Z</option>
+            <option value="name:desc">Name: Z → A</option>
+          </select>
+        </div>
+
+        <button id="applyBtn" class="btn-primary">
+          Apply Filters
+        </button>
+      </aside>
+
+      <!-- Product list -->
+      <main class="content-card">
+        <div id="errorBox" class="error-msg" style="display:none;"></div>
+
+        <div class="content-header">
+          <div class="count-text" id="countText">Showing products...</div>
+          <select id="sortSelectTop" class="select sort-select">
+            <option value="createdAt:desc">Newest first</option>
+            <option value="createdAt:asc">Oldest first</option>
+            <option value="price:asc">Price: Low → High</option>
+            <option value="price:desc">Price: High → Low</option>
+            <option value="name:asc">Name: A → Z</option>
+            <option value="name:desc">Name: Z → A</option>
+          </select>
+        </div>
+
+        <div id="listContainer" class="list"></div>
+
+        <div class="loading" id="loading" style="display:none;">
+          Loading fresh products…
+        </div>
+
+        <div class="pagination-row">
+          <button id="prevBtn" class="btn-secondary" disabled>← Previous</button>
+          <span class="status-text" id="pageStatus">Page 1</span>
+          <button id="nextBtn" class="btn-secondary" disabled>Next →</button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const minPriceInput = document.getElementById('minPriceInput');
+    const maxPriceInput = document.getElementById('maxPriceInput');
+    const sortSelect = document.getElementById('sortSelect');
+    const sortSelectTop = document.getElementById('sortSelectTop');
+    const categoryChips = document.getElementById('categoryChips');
+    const applyBtn = document.getElementById('applyBtn');
+
+    const listContainer = document.getElementById('listContainer');
+    const loadingEl = document.getElementById('loading');
+    const countText = document.getElementById('countText');
+    const errorBox = document.getElementById('errorBox');
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pageStatus = document.getElementById('pageStatus');
+
+    let currentCursor = null;
+    let prevCursorStack = [];
+    let currentPage = 1;
+    let lastPageHasNext = false;
+
+    let currentCategory = '';
+    const LIMIT = 12;
+
+    function showLoading(show) {
+      loadingEl.style.display = show ? 'block' : 'none';
+    }
+
+    function showError(msg) {
+      if (!msg) {
+        errorBox.style.display = 'none';
+        errorBox.textContent = '';
+      } else {
+        errorBox.style.display = 'block';
+        errorBox.textContent = msg;
+      }
+    }
+
+    function renderSkeletons() {
+      listContainer.innerHTML = '';
+      for (let i = 0; i < 6; i++) {
+        const sk = document.createElement('div');
+        sk.className = 'skeleton-card';
+        listContainer.appendChild(sk);
+      }
+    }
+
+    function renderProducts(data) {
+      listContainer.innerHTML = '';
+
+      if (!data.items || data.items.length === 0) {
+        listContainer.innerHTML = '<div class="loading">No products found for this filter.</div>';
+        countText.textContent = '0 products';
+        lastPageHasNext = false;
+        nextBtn.disabled = true;
+        return;
+      }
+
+      data.items.forEach((p) => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+
+        const category = document.createElement('div');
+        category.className = 'product-category';
+        category.textContent = p.category.toUpperCase();
+
+        const name = document.createElement('div');
+        name.className = 'product-name';
+        name.textContent = p.name;
+
+        const desc = document.createElement('div');
+        desc.className = 'product-desc';
+        desc.textContent = p.description;
+
+        const meta = document.createElement('div');
+        meta.className = 'product-meta';
+
+        const price = document.createElement('div');
+        price.className = 'price-tag';
+        price.textContent = `₹${p.price}`;
+
+        const created = document.createElement('div');
+        created.className = 'created-at';
+        const d = new Date(p.createdAt);
+        created.textContent = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        meta.appendChild(price);
+        meta.appendChild(created);
+
+        const glow = document.createElement('div');
+        glow.className = 'card-glow';
+
+        card.appendChild(glow);
+        card.appendChild(category);
+        card.appendChild(name);
+        card.appendChild(desc);
+        card.appendChild(meta);
+
+        listContainer.appendChild(card);
+      });
+
+      countText.textContent = `${data.items.length} products on this page`;
+      lastPageHasNext = !!data.nextCursor;
+      nextBtn.disabled = !data.nextCursor;
+      currentCursor = data.nextCursor || null;
+    }
+
+    async function fetchProducts({ reset = false } = {}) {
+      try {
+        showError('');
+        showLoading(true);
+        renderSkeletons();
+
+        const params = new URLSearchParams();
+        params.set('limit', LIMIT.toString());
+
+        const sortValue = sortSelect.value;
+        params.set('sort', sortValue);
+
+        const searchValue = searchInput.value.trim();
+        if (searchValue) params.set('search', searchValue);
+
+        if (currentCategory) params.set('category', currentCategory);
+
+        const minP = minPriceInput.value;
+        const maxP = maxPriceInput.value;
+        if (minP) params.set('minPrice', minP);
+        if (maxP) params.set('maxPrice', maxP);
+
+        if (!reset && prevCursorStack.length > 0) {
+          // using currentCursor for next page
+          if (currentCursor) params.set('after', prevCursorStack[prevCursorStack.length - 1]);
+        }
+
+        const res = await fetch(`/products?${params.toString()}`);
+        if (!res.ok) {
+          throw new Error('Failed to load products');
+        }
+        const data = await res.json();
+        renderProducts(data);
+
+        showLoading(false);
+      } catch (err) {
+        showLoading(false);
+        showError(err.message || 'Something went wrong while loading products.');
+      }
+    }
+
+    async function loadFirstPage() {
+      currentCursor = null;
+      prevCursorStack = [];
+      currentPage = 1;
+      pageStatus.textContent = `Page ${currentPage}`;
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+      await fetch(`/products?limit=${LIMIT}`);
+      await fetchPageWithCursor(null, true);
+    }
+
+    async function fetchPageWithCursor(cursor, isFirst = false) {
+      try {
+        showError('');
+        showLoading(true);
+        renderSkeletons();
+
+        const params = new URLSearchParams();
+        params.set('limit', LIMIT.toString());
+        params.set('sort', sortSelect.value);
+
+        const searchValue = searchInput.value.trim();
+        if (searchValue) params.set('search', searchValue);
+        if (currentCategory) params.set('category', currentCategory);
+
+        const minP = minPriceInput.value;
+        const maxP = maxPriceInput.value;
+        if (minP) params.set('minPrice', minP);
+        if (maxP) params.set('maxPrice', maxP);
+
+        if (cursor) params.set('after', cursor);
+
+        const res = await fetch(`/products?${params.toString()}`);
+        if (!res.ok) throw new Error('Failed to load products');
+
+        const data = await res.json();
+        renderProducts(data);
+        showLoading(false);
+
+        if (isFirst) {
+          currentCursor = data.nextCursor || null;
+          prevCursorStack = [];
+          currentPage = 1;
+          pageStatus.textContent = `Page ${currentPage}`;
+          prevBtn.disabled = true;
+        }
+
+      } catch (err) {
+        showLoading(false);
+        showError(err.message || 'Error fetching products.');
+      }
+    }
+
+    // Simplified pagination using stored cursors
+
+    async function goNext() {
+      if (!currentCursor) return;
+      prevCursorStack.push(currentCursor);
+      currentPage += 1;
+      pageStatus.textContent = `Page ${currentPage}`;
+      prevBtn.disabled = false;
+
+      await fetchPageWithCursor(currentCursor);
+    }
+
+    async function goPrev() {
+      if (prevCursorStack.length === 0) return;
+
+      prevCursorStack.pop(); // remove current cursor
+      const prevCursor = prevCursorStack[prevCursorStack.length - 1] || null;
+      currentPage = Math.max(1, currentPage - 1);
+      pageStatus.textContent = `Page ${currentPage}`;
+      prevBtn.disabled = currentPage === 1;
+
+      await fetchPageWithCursor(prevCursor);
+    }
+
+    // Events
+
+    categoryChips.addEventListener('click', (e) => {
+      if (e.target.classList.contains('chip')) {
+        const value = e.target.getAttribute('data-value') || '';
+        currentCategory = value;
+
+        Array.from(categoryChips.children).forEach((chip) => {
+          chip.classList.toggle('active', chip === e.target);
+        });
+      }
+    });
+
+    applyBtn.addEventListener('click', () => {
+      currentCursor = null;
+      prevCursorStack = [];
+      currentPage = 1;
+      pageStatus.textContent = `Page ${currentPage}`;
+      prevBtn.disabled = true;
+
+      fetchPageWithCursor(null, true);
+    });
+
+    sortSelectTop.addEventListener('change', () => {
+      sortSelect.value = sortSelectTop.value;
+      applyBtn.click();
+    });
+
+    sortSelect.addEventListener('change', () => {
+      sortSelectTop.value = sortSelect.value;
+    });
+
+    nextBtn.addEventListener('click', goNext);
+    prevBtn.addEventListener('click', goPrev);
+
+    // Initial load
+    fetchPageWithCursor(null, true);
+    
+  // ... tumhara existing JS (products, pagination etc.) ...
+
+  const oauthBtn = document.getElementById('oauthBtn');
+  const oauthTokenBox = document.getElementById('oauthTokenBox');
+
+  if (oauthBtn && oauthTokenBox) {
+    oauthBtn.addEventListener('click', async () => {
+      oauthBtn.textContent = 'Fetching token...';
+      oauthBtn.disabled = true;
+      try {
+        const res = await fetch('/auth/test-token');
+        if (!res.ok) throw new Error('Failed to fetch token');
+        const data = await res.json();
+        oauthTokenBox.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        oauthTokenBox.textContent = 'Error: ' + (err.message || 'Failed to load token');
+      } finally {
+        oauthBtn.textContent = 'Get Access Token';
+        oauthBtn.disabled = false;
+      }
+    });
+  }
+
+  // ... tumhara existing initial load (fetchPageWithCursor etc.)
+
+
+  </script>
+</body>
+</html>
